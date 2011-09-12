@@ -1,0 +1,83 @@
+
+<project name="conn4" default="compile" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+  <property name="dir.build.java" value="build/main"/>
+
+
+  <property name="ivy.install.version" value="2.2.0" />
+  <property name="ivy.jar.dir" value="${basedir}/lib_core" />
+  <property name="ivy.lib.dir" value="${basedir}/lib_dl" />
+  <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
+
+  <path id="classpath">
+    <fileset dir="lib"><include name="**/*.jar"/></fileset>
+    <fileset dir="lib_core"><include name="**/*.jar"/></fileset>
+    <fileset dir="lib_dl"><include name="**/*.jar"/></fileset>
+    <fileset dir="${ivy.lib.dir}"><include name="**/*.jar"/></fileset>
+    <pathelement path="${dir.build.java}" />
+  </path>
+
+
+  <target name="download-ivy" unless="skip.download">
+    <mkdir dir="${ivy.jar.dir}"/>
+    <!-- download Ivy from web site so that it can be used even without any special installation -->
+    <echo message="installing ivy..."/>
+    <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" dest="${ivy.jar.file}" usetimestamp="true"/>
+  </target>
+
+  <target name="install-ivy" depends="download-ivy" description="--> install ivy">
+    <!-- try to load ivy here from local ivy dir, in case the user has not already dropped
+         it into ant's lib dir (note that the latter copy will always take precedence).
+         We will not fail as long as local lib dir exists (it may be empty) and
+         ivy is in at least one of ant's lib dir or the local lib dir. -->
+    <path id="ivy.lib.path"><fileset dir="${ivy.jar.dir}" includes="*.jar"/></path>
+    <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+  </target>
+  <target name="clean-ivy" description="--> clean the ivy installation"><delete dir="${ivy.jar.dir}"/></target>
+
+  <target name="clean-cache" depends="install-ivy" description="--> clean the ivy cache"><ivy:cleancache /></target>
+
+  <target name="resolve" depends="install-ivy" description="--> retrieve dependencies with ivy">
+    <mkdir dir="${ivy.jar.dir}"/>
+    <ivy:retrieve/>
+  </target>
+
+  <target name="init">
+    <mkdir dir="build" />
+    <mkdir dir="${dir.build.java}" />
+
+  </target>
+
+  <target name="clean" description="--> clean up project">
+    <delete dir="build"/>
+  </target>
+
+  <target name="javadoc"  depends="init">
+    <mkdir dir="javadoc"/>
+    <javadoc charset="UTF-8" destdir="javadoc" docencoding="UTF-8" failonerror="true"  private="false"  useexternalfile="true">
+      <classpath refid="classpath"/>
+      <fileset dir="."><filename name="src/main/**/*.java"/></fileset>
+    </javadoc>
+  </target>
+
+  <target name="checklib"><available property="lib.exists" file="${ivy.lib.dir}"/></target>
+
+  <target name="firstresolve" depends="checklib" unless="${lib.exists}"><antcall target="resolve" /></target>
+
+  <target name="compile" depends="init, firstresolve" description="--> compile all artifacts">
+
+    <mkdir dir="build"/>
+    <javac srcdir="src/main/java"
+           includeantruntime="false"
+           destdir="${dir.build.java}"
+           debug="on" >
+      <classpath refid="classpath"/>
+    </javac>
+    <jar destfile="conn4.jar">
+      <fileset dir="${dir.build.java}"
+               includes="**/*.class" />
+    </jar>
+
+
+  </target>
+
+</project>
