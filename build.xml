@@ -6,12 +6,11 @@
   <property name="ivy.install.version" value="2.2.0" />
   <property name="ivy.jar.dir" value="${basedir}/lib_core" />
   <property name="ivy.lib.dir" value="${basedir}/lib_dl" />
+  <property name="manual.lib.dir" value="${basedir}/lib" /><!-- manually drop any jar files needed here -->
   <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
 
   <path id="classpath">
-    <fileset dir="lib"><include name="**/*.jar"/></fileset>
-    <fileset dir="lib_core"><include name="**/*.jar"/></fileset>
-    <fileset dir="lib_dl"><include name="**/*.jar"/></fileset>
+    <fileset dir="${manual.lib.dir}"><include name="**/*.jar"/></fileset>
     <fileset dir="${ivy.lib.dir}"><include name="**/*.jar"/></fileset>
     <pathelement path="${dir.build.java}" />
   </path>
@@ -43,6 +42,7 @@
 
   <target name="init">
     <mkdir dir="build" />
+    <mkdir dir="${manual.lib.dir}" /> <!-- So <javac> doesn't complain if it doesn't exist -->
     <mkdir dir="${dir.build.java}" />
 
   </target>
