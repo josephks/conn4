@@ -338,7 +338,7 @@ public class Connect4Generator extends MongoTool {
             collName = origUri.getCollection();
         if (collName == null || collName.length() == 0) {
             collName = "conn4boards" + width + "x" + height;
-            wholeMuri = new MongoURI(origUri + dbName + "." + collName);
+            wholeMuri = new MongoURI(origUri + "/" + dbName + "." + collName);
         }
         log.info(" collname: "+collName+" dName: "+dbName+" whole uri: "+wholeMuri);
         Mongo m = new Mongo(wholeMuri);
