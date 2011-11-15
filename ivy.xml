@@ -1,9 +1,9 @@
 <ivy-module version="2.0">
     <info organisation="net.tupari" module="conn4"/>
     <dependencies>
-        <dependency org="org.apache.hadoop" name="hadoop-core" rev="0.20.203.0"/>
+        <dependency org="org.apache.hadoop" name="hadoop-core" rev="0.20.205.0"/>
         <dependency org="commons-logging" name="commons-logging" rev="1.1.1"/>
-        <dependency org="org.mongodb" name="mongo-java-driver" rev="2.6.3"/>
+        <dependency org="org.mongodb" name="mongo-java-driver" rev="2.7.1"/>
         <dependency org="net.tupari" name="mongo-hadoop" rev="1.0-SNAPSHOT"/>
     </dependencies>
 </ivy-module>
