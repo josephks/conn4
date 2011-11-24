@@ -290,9 +290,9 @@ public class Connect4Generator extends MongoTool {
         final WriteResult result = coll.update(statekey, new BasicDBObject("$set", new BasicDBObject(place, move)));
         System.out.println("setState(): result is: "+result);
         final CommandResult lastError = result.getLastError();
-        if (lastError == null)
+        if (lastError == null || lastError.ok())
                 return true;
-        System.err.println("Could not set state, err is: "+lastError);
+        System.err.println("Could not set state, err is: "+lastError+ (lastError != null ? " ok(): "+lastError.ok() : ""));
         return false;
     }
     //Can't do right now bec. of type safety can't mix and match Text and MongoUpdateKey
