@@ -287,7 +287,7 @@ public class Connect4Generator extends MongoTool {
          return null;
     }
     private boolean setState(DBCollection coll, String place, int move){
-        final WriteResult result = coll.update(statekey, new BasicDBObject(place, move));
+        final WriteResult result = coll.update(statekey, new BasicDBObject("$set", new BasicDBObject(place, move)));
         System.out.println("setState(): result is: "+result);
         final CommandResult lastError = result.getLastError();
         if (lastError == null)
