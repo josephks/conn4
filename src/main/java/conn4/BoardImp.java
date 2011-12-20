@@ -70,6 +70,7 @@ public class BoardImp implements Board {
             ans.add(Checker.fromString(s));
         return ans;
     }
+    @Override
     public BasicDBObject toBSONObject() {
         BasicDBObject ans = new BasicDBObject();
         List<List<String>> board4serial = new ArrayList<List<String>>(board_width);
@@ -210,6 +211,17 @@ public class BoardImp implements Board {
     public List<Board> getAllMoves(){
         List<Board> ans = new ArrayList<Board>(board_width);
         for(int i = 1 ; i <= board_width ; i++){
+             Board mi = move(i);
+             if (mi != null)
+                 ans.add(mi);
+        }
+        return ans;
+    }
+    /** Get boards representing all possible moves, excluding mirror copies of each other */
+    public List<Board> getAllUniqeMoves(){
+        final boolean isSem = isSemetrical();
+        List<Board> ans = new ArrayList<Board>(board_width);
+        for(int i = 1 ; i <= board_width && ( (!isSem) || i <= board_width /2); i++){
              Board mi = move(i);
              if (mi != null)
                  ans.add(mi);

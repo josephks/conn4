@@ -59,7 +59,7 @@ public class Connect4Generator extends MongoTool {
         @Override
         protected void map(Object key, BSONObject value, Context context) throws IOException, InterruptedException {
             BoardImp board = BoardImp. getBoard(height, value);
-            final List<Board> allMoves = board.getAllMoves();
+            final List<Board> allMoves = board.getAllUniqeMoves();
             if(allMoves.isEmpty() && ! board.isWinning())
                 log.error("Why doesn't this board have children?\n"+board);
             if (log.isDebugEnabled())
@@ -196,7 +196,7 @@ public class Connect4Generator extends MongoTool {
                 BoardImp board = BoardImp.getBoard(height, bsonBoard);
                 BasicBSONObject bestMoves = (BasicBSONObject) bsonBoard.get(BoardImp.BEST_RESULTS_FIELD_NAME);
                 if (bestMoves == null){
-                    log.warn("bestMoves of "+board+" is null, all children are: "+board.getAllMoves());
+                    log.warn("bestMoves of "+board+" is null, all children are: "+board.getAllUniqeMoves());
                     return;
                     //BUG: why is this null?
                 }
@@ -477,7 +477,6 @@ public class Connect4Generator extends MongoTool {
     public static final void main(String[] args) throws Exception {
         org.apache.log4j.Logger.getLogger(com.mongodb.hadoop.io.BSONWritable.class).setLevel(org.apache.log4j.Level.WARN);
         org.apache.log4j.Logger.getLogger(com.mongodb.hadoop.input.MongoInputSplit.class).setLevel(org.apache.log4j.Level.DEBUG);
-        org.apache.log4j.Logger.getLogger(com.mongodb.hadoop.MongoInputFormat.class).setLevel(org.apache.log4j.Level.DEBUG);
         
         Configuration conf = new Configuration();
         ToolRunner.run(conf, new Connect4Generator(), args);
