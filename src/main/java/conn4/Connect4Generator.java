@@ -300,6 +300,7 @@ public class Connect4Generator extends MongoTool {
          return null;
     }
     private boolean setState(DBCollection coll, String place, int move){
+        //use $set for bug workaround
         final WriteResult result = coll.update(statekey, new BasicDBObject("$set", new BasicDBObject(place, move)));
         System.out.println("setState(): result is: "+result);
         final CommandResult lastError = result.getLastError();
@@ -311,6 +312,8 @@ public class Connect4Generator extends MongoTool {
     //Can't do right now bec. of type safety can't mix and match Text and MongoUpdateKey
     //todo: update plugin to have a superclass of  MongoUpdateKey (MongoUpdate) with
     //another subclass for simple setting so we can use both
+    //There is also the problem that we don't know when this will be writted to the db,
+    //it could get written much before the actual results.
     private static void markDone(Context context, String key, String what){
     //      context.write(MongoUpdateKey.getFor(key),
     //              new BSONWritable(new BasicDBObject(DONE_KEY, what)) );
@@ -385,20 +388,20 @@ public class Connect4Generator extends MongoTool {
                 }
             } else {
                 log.info("Read state from db: "+stateDoc);
+                //because of the way we set the state doc to work around a mongo bug
+                //"gen" might still be in the doc even if best is set, so check best first
                 Number genDid = (Number) stateDoc.get("gen");
-                if (genDid != null){
+                Number bestDid = (Number) stateDoc.get("best");
+                if (bestDid != null) {
+                    beststart = bestDid.intValue() - 1;
+                    genstart = num_moves + 1; //don't do generation stage
+                } else if (genDid != null) {
                     genstart = genDid.intValue() + 1;
                     //remove any partial results of generation x+1
                     coll.remove(new BasicDBObject(BoardImp.NUM_CHECKERS_FIELD_NAME, genstart));//todo: get rid of need for this
-                }else{
-                    Number bestDid = (Number) stateDoc.get("best");
-                    if (bestDid != null) {
-                        beststart = bestDid.intValue() - 1;
-                        genstart = num_moves + 1; //don't do generation stage
-                    } else {
-                        System.out.println("Am I finished? state doc is: " + stateDoc);
-                        return 0;
-                    }
+                } else {
+                    System.out.println("Am I finished? state doc is: " + stateDoc);
+                    return 0;
                 }
             }//else
 
@@ -479,6 +482,7 @@ public class Connect4Generator extends MongoTool {
                return result; //tie
        }
     }
+    
     /*
      * board looks like:
      * board string: {{, , , r, b},{...}}
