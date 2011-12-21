@@ -76,6 +76,14 @@ public class Connect4Generator extends MongoTool {
         }
         
     }
+    public static class BoardGenCombiner extends Reducer<Text, BSONWritable, Text, BSONWritable> {
+        @Override
+        protected void reduce(Text key, Iterable<BSONWritable> values, Context context) throws IOException, InterruptedException {
+            //all the boards should be the same, so just get the first one
+            //This should save bandwith if we have to write out the intermediate results to disk
+            context.write( key, values.iterator().next());
+        }
+    }
     public static class BoardGenReducer extends Reducer<Text, BSONWritable, String, BSONObject> {
         int height = -1;
 
@@ -159,10 +167,13 @@ public class Connect4Generator extends MongoTool {
             query.append("wins", DOES_NOT_EXIST);
             mongo_conf.setQuery(query);
         }
-        final Job job = new Job( conf , "conn4 generator move "+move);
+        conf.setBoolean("mapreduce.map.output.compress", true);
+        conf.setInt("mapreduce.job.jvm.numtasks", -1);
+        final Job job = Job.getInstance( conf , "conn4 generator move "+move);
         
         job.setMapperClass( BoardGenMapper.class );
         job.setReducerClass( BoardGenReducer.class );
+        job.setCombinerClass( BoardGenCombiner.class );
         
         job.setJarByClass(this.getClass());
         
@@ -250,7 +261,9 @@ public class Connect4Generator extends MongoTool {
             query.append("wins",  DOES_NOT_EXIST);
             mongo_conf.setQuery(query);
         }
-        final Job job = new Job(conf , "conn4 generator setBestMoves("+move+")");
+        conf.setBoolean("mapreduce.map.output.compress", true);
+        conf.setInt("mapreduce.job.jvm.numtasks", -1);
+        final Job job = Job.getInstance(conf , "conn4 generator setBestMoves("+move+")");
         job.setMapperClass( BestMoveMapper.class );
         job.setReducerClass( BestMoveReducer.class );
         
