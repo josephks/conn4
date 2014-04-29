@@ -13,7 +13,7 @@ import com.mongodb.WriteResult;
 import java.io.*;
 import java.util.*;
 
-import com.mongodb.hadoop.output.MongoUpdateKey;
+//import com.mongodb.hadoop.output.MongoUpdateKey;
 import org.apache.hadoop.conf.*;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.*;
@@ -84,18 +84,19 @@ public class Connect4Generator extends MongoTool {
             context.write( key, values.iterator().next());
         }
     }
-    public static class BoardGenReducer extends Reducer<Text, BSONWritable, String, BSONObject> {
+    public static class BoardGenReducer extends Reducer<Text, BSONWritable, String, BSONWritable> {
         int height = -1;
 
         @Override
         protected void reduce(Text key, Iterable<BSONWritable> values, Context context) throws IOException, InterruptedException {
             //all the boards should be the same, so just get the first one
             BSONWritable bsonBoard = values.iterator().next();
+            final BSONObject bsonBoardDoc = bsonBoard.getDoc();
             //write input boards to the database
             context.write( key.toString(), bsonBoard);
-            if (bsonBoard.containsKey("wins")){
+            if (bsonBoardDoc.containsField("wins")){
                 //update parents of winning boards here
-                BoardImp board = BoardImp.getBoard(height, bsonBoard);
+                BoardImp board = BoardImp.getBoard(height, bsonBoardDoc);
                 
                 //In this example red wins
                 //update parents bestresult->lose0
@@ -106,7 +107,7 @@ public class Connect4Generator extends MongoTool {
                 //         for (greatgrandparents) //black's move
                 //              bestresults[colidx]->lose2
                 //              do not update best result
-                if ("tie".equals(bsonBoard.get("wins")))
+                if ("tie".equals(bsonBoardDoc.get("wins")))
                      updateParentsOfTies(board.getAllParents(), context);
                 else
                     updateParentsOfWinningBoard(board.getAllParents(), context);
@@ -152,7 +153,9 @@ public class Connect4Generator extends MongoTool {
     private static void updateBoard(BoardImp board, org.apache.hadoop.mapreduce.Reducer.Context context, BasicDBObject update)
             throws IOException, InterruptedException{
         final BasicDBObject val = new BasicDBObject("$set", update);
-        context.write(MongoUpdateKey.getFor(board.toString()), val);
+        //old, get rid of: context.write(MongoUpdateKey.getFor(board.toString()), val);
+                                                                         ;
+        new com.mongodb.hadoop.io.MongoUpdateWritable(new BasicDBObject("_id", board.toString()), update);
     }
 
     /** Query for all boards of generation N-1. For each of those, generate all its
@@ -203,7 +206,7 @@ public class Connect4Generator extends MongoTool {
                 //At this point we know what all the best move values are for the next generation, so we can set
                 //the best move values for this generation.
                 //There should be only one board in values
-                BSONObject bsonBoard = values.iterator().next();
+                BSONObject bsonBoard = values.iterator().next().getDoc();
                 BoardImp board = BoardImp.getBoard(height, bsonBoard);
                 BasicBSONObject bestMoves = (BasicBSONObject) bsonBoard.get(BoardImp.BEST_RESULTS_FIELD_NAME);
                 if (bestMoves == null){
@@ -301,18 +304,19 @@ public class Connect4Generator extends MongoTool {
     }
     private boolean setState(DBCollection coll, String place, int move){
         //use $set for bug workaround
-        final WriteResult result = coll.update(statekey, new BasicDBObject("$set", new BasicDBObject(place, move)));
+        final WriteResult result = coll.update(statekey, new BasicDBObject("$set", new BasicDBObject(place, move)), false, false, WriteConcern.ACKNOWLEDGED);
         System.out.println("setState(): result is: "+result);
-        final CommandResult lastError = result.getLastError();
-        if (lastError == null || lastError.ok())
-                return true;
-        System.err.println("Could not set state, err is: "+lastError+ (lastError != null ? " ok(): "+lastError.ok() : ""));
-        return false;
+//        final CommandResult lastError = result.getLastError();
+//        if (lastError == null || lastError.ok())
+//                return true;
+//        System.err.println("Could not set state, err is: "+lastError+ (lastError != null ? " ok(): "+lastError.ok() : ""));
+//        return false;
+        return true;
     }
     //Can't do right now bec. of type safety can't mix and match Text and MongoUpdateKey
     //todo: update plugin to have a superclass of  MongoUpdateKey (MongoUpdate) with
     //another subclass for simple setting so we can use both
-    //There is also the problem that we don't know when this will be writted to the db,
+    //There is also the problem that we don't know when this will be written to the db,
     //it could get written much before the actual results.
     private static void markDone(Context context, String key, String what){
     //      context.write(MongoUpdateKey.getFor(key),
@@ -341,11 +345,11 @@ public class Connect4Generator extends MongoTool {
         }
         final Configuration conf = getConf();
         
-        MongoURI origUri =  MongoConfigUtil.getOutputURI( conf);
+        com.mongodb.MongoClientURI origUri =  MongoConfigUtil.getOutputURI( conf);
         log.info("uri from conf is: "+origUri);
         if (origUri == null)
-            origUri = new MongoURI(defaultDbUri);
-        MongoURI wholeMuri = origUri;
+            origUri = new com.mongodb.MongoClientURI(defaultDbUri);
+        com.mongodb.MongoClientURI wholeMuri = origUri;
         String dbName = origUri.getDatabase();
         String collName = null;
         if (dbName == null || dbName.length() == 0)
@@ -354,10 +358,10 @@ public class Connect4Generator extends MongoTool {
             collName = origUri.getCollection();
         if (collName == null || collName.length() == 0) {
             collName = "conn4boards" + width + "x" + height;
-            wholeMuri = new MongoURI(origUri + "/" + dbName + "." + collName);
+            wholeMuri = new com.mongodb.MongoClientURI(origUri + "/" + dbName + "." + collName);
         }
         log.info(" collname: "+collName+" dName: "+dbName+" whole uri: "+wholeMuri);
-        Mongo m = new Mongo(wholeMuri);
+        com.mongodb.MongoClient m = new com.mongodb.MongoClient(wholeMuri);
         try{
             final DB db = m.getDB(wholeMuri.getDatabase());
             DBCollection coll = db.getCollection(collName);
