@@ -67,9 +67,15 @@
 
     <mkdir dir="build"/>
     <javac srcdir="src/main/java"
+           deprecation="on"
            includeantruntime="false"
            destdir="${dir.build.java}"
-           debug="on" >
+           debug="on"
+>
+<!--
+for debugging put these in <javac> above
+fork="true" executable="/bin/echo" -->
+
       <classpath refid="classpath"/>
     </javac>
     <jar destfile="conn4.jar">
@@ -79,5 +85,7 @@
 
 
   </target>
+
+  <target name="rebuild" depends="clean, compile" />
 
 </project>
