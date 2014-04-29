@@ -153,8 +153,8 @@ public class Connect4Generator extends MongoTool {
     private static void updateBoard(BoardImp board, org.apache.hadoop.mapreduce.Reducer.Context context, BasicDBObject update)
             throws IOException, InterruptedException{
         final BasicDBObject val = new BasicDBObject("$set", update);
-        //old, get rid of: context.write(MongoUpdateKey.getFor(board.toString()), val);
-        new com.mongodb.hadoop.io.MongoUpdateWritable(new BasicDBObject("_id", board.toString()), update);
+        context.write(null, new com.mongodb.hadoop.io.MongoUpdateWritable(new BasicDBObject("_id", board.toString()), update));
+
     }
 
     /** Query for all boards of generation N-1. For each of those, generate all its
