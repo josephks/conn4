@@ -48,7 +48,7 @@ public class Connect4Generator extends MongoTool {
         final BasicDBObject DOES_NOT_EXIST = new com.mongodb.BasicDBObject("$exists", Boolean.FALSE);
         final BasicDBObject DOES_EXIST = new com.mongodb.BasicDBObject("$exists", Boolean.TRUE);
     
-    private enum CounterKeys{ ERROR };
+    private enum CounterKeys{ ERROR }
     
     //input: boards of generation n-1
     //send child boards to reducer
@@ -154,7 +154,6 @@ public class Connect4Generator extends MongoTool {
             throws IOException, InterruptedException{
         final BasicDBObject val = new BasicDBObject("$set", update);
         //old, get rid of: context.write(MongoUpdateKey.getFor(board.toString()), val);
-                                                                         ;
         new com.mongodb.hadoop.io.MongoUpdateWritable(new BasicDBObject("_id", board.toString()), update);
     }
 
