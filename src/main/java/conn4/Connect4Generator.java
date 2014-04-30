@@ -155,7 +155,7 @@ public class Connect4Generator extends MongoTool {
             throws IOException, InterruptedException{
         final BasicDBObject val = new BasicDBObject("$set", update);
 
-        context.write(null, new MongoUpdateWritable(new BasicDBObject("_id", board.toString()), update, false, false));
+        context.write(null, new MongoUpdateWritable(new BasicDBObject("_id", board.toString()), val, false, false));
     }
 
     /** Query for all boards of generation N-1. For each of those, generate all its
