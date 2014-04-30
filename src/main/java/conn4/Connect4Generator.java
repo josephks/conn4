@@ -14,6 +14,7 @@ import java.io.*;
 import java.util.*;
 
 //import com.mongodb.hadoop.output.MongoUpdateKey;
+import com.mongodb.hadoop.io.MongoUpdateWritable;
 import org.apache.hadoop.conf.*;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.*;
@@ -153,8 +154,8 @@ public class Connect4Generator extends MongoTool {
     private static void updateBoard(BoardImp board, org.apache.hadoop.mapreduce.Reducer.Context context, BasicDBObject update)
             throws IOException, InterruptedException{
         final BasicDBObject val = new BasicDBObject("$set", update);
-        context.write(null, new com.mongodb.hadoop.io.MongoUpdateWritable(new BasicDBObject("_id", board.toString()), update));
 
+        context.write(null, new MongoUpdateWritable(new BasicDBObject("_id", board.toString()), update, false, false));
     }
 
     /** Query for all boards of generation N-1. For each of those, generate all its
@@ -327,7 +328,7 @@ public class Connect4Generator extends MongoTool {
 //        BestMoveMapper.class.newInstance();
         int width = 4;
         int height = 4;
-        final String defaultDbUri = "mongodb://localhost:30010/";
+        final String defaultDbUri = "mongodb://localhost:30000";
         final String DefaultDbName = "test";
         for (int i = 0; i < args.length; i++) {
             String argi = args[i];
